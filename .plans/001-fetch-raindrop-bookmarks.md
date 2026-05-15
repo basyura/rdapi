@@ -22,6 +22,10 @@ Raindrop API を使って、登録済みブックマークを取得し、
 ## 修正対象
 
 - `main.go`
+- `main_test.go`
+- `README.md`
+- `.gitignore`
+- `AGENTS.md`
 
 ## 実装方針
 
@@ -67,5 +71,7 @@ go run . -redirect-uri ... -code ...
 - `config.toml` に token が残っているケースは考慮しない。
 - `redirect_uri` は Raindrop のアプリ設定に登録した値と完全一致させる。
 - 認可コードは初回 token 取得のみで使い、以後は保存した token を使う。
+- 利用者向けの使い方は `README.md` に記載する。
+- 作業者向けの注意点は `AGENTS.md` に記載する。
 - まずは最小構成で取得と表示を実装し、検索条件やページングは
   必要になった時点で追加する。
