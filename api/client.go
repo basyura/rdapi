@@ -10,8 +10,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
-	"rdapi/config"
 )
 
 const (
@@ -19,12 +17,12 @@ const (
 	raindropsURL = "https://api.raindrop.io/rest/v1/raindrops/0"
 )
 
-func ExchangeCode(client *http.Client, cfg config.AuthConfig, redirectURI, code string) (TokenResponse, error) {
+func ExchangeCode(client *http.Client, clientID, clientSecret, redirectURI, code string) (TokenResponse, error) {
 	body := map[string]string{
 		"grant_type":    "authorization_code",
 		"code":          code,
-		"client_id":     cfg.ClientID,
-		"client_secret": cfg.ClientSecret,
+		"client_id":     clientID,
+		"client_secret": clientSecret,
 		"redirect_uri":  redirectURI,
 	}
 
@@ -63,12 +61,12 @@ func ExchangeCode(client *http.Client, cfg config.AuthConfig, redirectURI, code 
 	return token, nil
 }
 
-func RefreshAccessToken(client *http.Client, cfg config.AuthConfig) (TokenResponse, error) {
+func RefreshAccessToken(client *http.Client, clientID, clientSecret, refreshToken string) (TokenResponse, error) {
 	body := map[string]string{
 		"grant_type":    "refresh_token",
-		"refresh_token": cfg.RefreshToken,
-		"client_id":     cfg.ClientID,
-		"client_secret": cfg.ClientSecret,
+		"refresh_token": refreshToken,
+		"client_id":     clientID,
+		"client_secret": clientSecret,
 	}
 
 	var buf bytes.Buffer
@@ -104,7 +102,7 @@ func RefreshAccessToken(client *http.Client, cfg config.AuthConfig) (TokenRespon
 		return TokenResponse{}, fmt.Errorf("access_token is missing in refresh token response: %s", compactResponseBody(responseBody))
 	}
 	if token.RefreshToken == "" {
-		token.RefreshToken = cfg.RefreshToken
+		token.RefreshToken = refreshToken
 	}
 	return token, nil
 }

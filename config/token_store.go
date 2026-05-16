@@ -1,4 +1,4 @@
-package api
+package config
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func SaveAuthTokens(path string, token TokenResponse) error {
+func SaveAuthTokens(path, accessToken, refreshToken string) error {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
@@ -17,9 +17,9 @@ func SaveAuthTokens(path string, token TokenResponse) error {
 		content = []byte("[auth]\n")
 	}
 
-	updated := UpsertAuthValue(string(content), "access_token", token.AccessToken)
-	if token.RefreshToken != "" {
-		updated = UpsertAuthValue(updated, "refresh_token", token.RefreshToken)
+	updated := UpsertAuthValue(string(content), "access_token", accessToken)
+	if refreshToken != "" {
+		updated = UpsertAuthValue(updated, "refresh_token", refreshToken)
 	}
 
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {

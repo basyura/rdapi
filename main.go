@@ -1,13 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
+	"runtime"
 	"sort"
+	"strings"
 	"time"
 
 	"rdapi/api"
@@ -56,11 +60,11 @@ func run(args []string, in io.Reader, out io.Writer) error {
 	accessToken := cfg.AccessToken
 	forceAuthorization := *redirectURI != "" && *code == ""
 	if accessToken == "" && cfg.RefreshToken != "" && !forceAuthorization {
-		token, err := api.RefreshAccessToken(client, cfg)
+		token, err := api.RefreshAccessToken(client, cfg.ClientID, cfg.ClientSecret, cfg.RefreshToken)
 		if err != nil {
 			return err
 		}
-		if err := api.SaveAuthTokens(resolvedSecretPath, token); err != nil {
+		if err := config.SaveAuthTokens(resolvedSecretPath, token.AccessToken, token.RefreshToken); err != nil {
 			return err
 		}
 		accessToken = token.AccessToken
@@ -70,12 +74,12 @@ func run(args []string, in io.Reader, out io.Writer) error {
 			return printRaindrops(client, accessToken, out)
 		}
 		authURL := api.CreateAuthorizationURL(cfg.ClientID, selectedRedirectURI)
-		if err := api.OpenBrowser(authURL); err != nil {
+		if err := openBrowser(authURL); err != nil {
 			return err
 		}
 		fmt.Fprintln(out, "Opened the authorization URL in your browser:")
 		fmt.Fprintln(out, authURL)
-		enteredCode, err := api.PromptAuthorizationCode(in, out)
+		enteredCode, err := promptAuthorizationCode(in, out)
 		if err != nil {
 			return err
 		}
@@ -83,15 +87,54 @@ func run(args []string, in io.Reader, out io.Writer) error {
 	}
 
 	authorizationCode := api.ExtractAuthorizationCode(*code)
-	token, err := api.ExchangeCode(client, cfg, selectedRedirectURI, authorizationCode)
+	token, err := api.ExchangeCode(client, cfg.ClientID, cfg.ClientSecret, selectedRedirectURI, authorizationCode)
 	if err != nil {
 		return err
 	}
-	if err := api.SaveAuthTokens(resolvedSecretPath, token); err != nil {
+	if err := config.SaveAuthTokens(resolvedSecretPath, token.AccessToken, token.RefreshToken); err != nil {
 		return err
 	}
 
 	return printRaindrops(client, token.AccessToken, out)
+}
+
+func promptAuthorizationCode(in io.Reader, out io.Writer) (string, error) {
+	fmt.Fprint(out, "Enter authorization code or redirected URL: ")
+
+	scanner := bufio.NewScanner(in)
+	if !scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			return "", fmt.Errorf("read authorization code: %w", err)
+		}
+		return "", errors.New("authorization code is required")
+	}
+
+	code := strings.TrimSpace(scanner.Text())
+	if code == "" {
+		return "", errors.New("authorization code is required")
+	}
+	return code, nil
+}
+
+func openBrowser(rawURL string) error {
+	var command string
+	var args []string
+
+	switch runtime.GOOS {
+	case "darwin":
+		command = "open"
+	case "windows":
+		command = "rundll32"
+		args = []string{"url.dll,FileProtocolHandler"}
+	default:
+		command = "xdg-open"
+	}
+	args = append(args, rawURL)
+
+	if err := exec.Command(command, args...).Start(); err != nil {
+		return fmt.Errorf("open authorization URL in browser: %w", err)
+	}
+	return nil
 }
 
 func printRaindrops(client *http.Client, accessToken string, out io.Writer) error {

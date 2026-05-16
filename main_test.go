@@ -39,9 +39,9 @@ client_secret = "secret"
 redirect_uri = "http://localhost/callback"
 `
 
-	content = api.UpsertAuthValue(content, "access_token", "access")
-	content = api.UpsertAuthValue(content, "refresh_token", "refresh")
-	content = api.UpsertAuthValue(content, "access_token", "updated")
+	content = config.UpsertAuthValue(content, "access_token", "access")
+	content = config.UpsertAuthValue(content, "refresh_token", "refresh")
+	content = config.UpsertAuthValue(content, "access_token", "updated")
 
 	if err := os.WriteFile(configPath, []byte(content), 0600); err != nil {
 		t.Fatalf("write config: %v", err)
@@ -72,11 +72,7 @@ func TestSaveAndLoadAuthTokens(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "secret.toml")
 
-	token := api.TokenResponse{
-		AccessToken:  "access",
-		RefreshToken: "refresh",
-	}
-	if err := api.SaveAuthTokens(path, token); err != nil {
+	if err := config.SaveAuthTokens(path, "access", "refresh"); err != nil {
 		t.Fatalf("saveAuthTokens: %v", err)
 	}
 

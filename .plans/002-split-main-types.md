@@ -28,9 +28,7 @@
 - `authorizationURL` 関数を `api` パッケージへ移動する。
   - 新規ファイル: `api/authorization.go`
   - 関数名: `CreateAuthorizationURL`
-- `promptAuthorizationCode` 関数を `api` パッケージへ移動する。
-  - ファイル: `api/authorization.go`
-  - 関数名: `PromptAuthorizationCode`
+- `promptAuthorizationCode` 関数は CLI 入力処理として `main` パッケージに残す。
 - `defaultConfigPath` 関数を `config` パッケージへ移動する。
   - 新規ファイル: `config/path.go`
   - 関数名: `GetDefaultConfigPath`
@@ -45,15 +43,14 @@
 - 端末幅取得関数を `term` パッケージへ移動する。
   - 新規ファイル: `term/terminal_width.go`
   - 関数名: `GetTerminalWidth`
-- `main.go` の API/OAuth 関連関数を `api` パッケージへ移動する。
-  - `OpenBrowser`
+- `main.go` の API/OAuth 関連関数を役割別に移動する。
   - `ExtractAuthorizationCode`
   - `ExchangeCode`
   - `RefreshAccessToken`
   - `FetchAllRaindrops`
   - `FetchRaindropsPage`
-  - `SaveAuthTokens`
-  - `UpsertAuthValue`
+- `openBrowser` は CLI 操作として `main` パッケージに残す。
+- `SaveAuthTokens` と `UpsertAuthValue` は `config` パッケージへ移動する。
 
 ## 実装方針
 
@@ -66,8 +63,9 @@
 - テスト内の型参照も新しいパッケージ名に合わせて更新する。
 - macOS のメタデータファイル `.DS_Store` を Git 管理対象から除外する。
 - OAuth 認可 URL 生成は `api.CreateAuthorizationURL` から呼び出す。
-- API 通信と token 保存に必要な補助関数は `api` パッケージ内へ寄せる。
-- 認可コード入力処理は `api.PromptAuthorizationCode` から呼び出す。
+- API 通信に必要な補助関数は `api` パッケージ内へ寄せる。
+- token 保存は `config.SaveAuthTokens` から呼び出す。
+- 認可コード入力処理とブラウザ起動は CLI 操作として `main` パッケージ内に置く。
 - デフォルト設定ファイルパスは `config.GetDefaultConfigPath` から取得する。
 - デフォルト secret ファイルパスは `config.GetDefaultSecretPath` から取得する。
 - 表示幅の省略処理は `term.TruncateByDisplayWidth` から呼び出す。
