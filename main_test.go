@@ -5,6 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"rdapi/api"
+	"rdapi/config"
+	"rdapi/term"
 )
 
 func TestExtractAuthorizationCode(t *testing.T) {
@@ -17,7 +21,7 @@ func TestExtractAuthorizationCode(t *testing.T) {
 
 	for input, want := range tests {
 		t.Run(input, func(t *testing.T) {
-			got := extractAuthorizationCode(input)
+			got := api.ExtractAuthorizationCode(input)
 			if got != want {
 				t.Fatalf("got %q, want %q", got, want)
 			}
@@ -26,25 +30,41 @@ func TestExtractAuthorizationCode(t *testing.T) {
 }
 
 func TestUpsertAuthValue(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.toml")
+	secretPath := filepath.Join(dir, "secret.toml")
 	content := `[auth]
 client_id = "id"
 client_secret = "secret"
 redirect_uri = "http://localhost/callback"
 `
 
-	content = upsertAuthValue(content, "access_token", "access")
-	content = upsertAuthValue(content, "refresh_token", "refresh")
-	content = upsertAuthValue(content, "access_token", "updated")
+	content = api.UpsertAuthValue(content, "access_token", "access")
+	content = api.UpsertAuthValue(content, "refresh_token", "refresh")
+	content = api.UpsertAuthValue(content, "access_token", "updated")
 
-	values := parseAuthSection(content)
-	if values["access_token"] != "updated" {
-		t.Fatalf("access_token = %q", values["access_token"])
+	if err := os.WriteFile(configPath, []byte(content), 0600); err != nil {
+		t.Fatalf("write config: %v", err)
 	}
-	if values["refresh_token"] != "refresh" {
-		t.Fatalf("refresh_token = %q", values["refresh_token"])
+	cfg, err := config.LoadAuthConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadAuthConfig: %v", err)
 	}
-	if values["client_id"] != "id" {
-		t.Fatalf("client_id = %q", values["client_id"])
+	if cfg.ClientID != "id" {
+		t.Fatalf("client_id = %q", cfg.ClientID)
+	}
+
+	if err := os.WriteFile(secretPath, []byte(content), 0600); err != nil {
+		t.Fatalf("write secret: %v", err)
+	}
+	if err := config.LoadAuthSecrets(secretPath, &cfg); err != nil {
+		t.Fatalf("LoadAuthSecrets: %v", err)
+	}
+	if cfg.AccessToken != "updated" {
+		t.Fatalf("access_token = %q", cfg.AccessToken)
+	}
+	if cfg.RefreshToken != "refresh" {
+		t.Fatalf("refresh_token = %q", cfg.RefreshToken)
 	}
 }
 
@@ -52,11 +72,11 @@ func TestSaveAndLoadAuthTokens(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "secret.toml")
 
-	token := tokenResponse{
+	token := api.TokenResponse{
 		AccessToken:  "access",
 		RefreshToken: "refresh",
 	}
-	if err := saveAuthTokens(path, token); err != nil {
+	if err := api.SaveAuthTokens(path, token); err != nil {
 		t.Fatalf("saveAuthTokens: %v", err)
 	}
 
@@ -68,9 +88,9 @@ func TestSaveAndLoadAuthTokens(t *testing.T) {
 		t.Fatalf("mode = %v, want 0600", got)
 	}
 
-	var cfg authConfig
-	if err := loadAuthSecrets(path, &cfg); err != nil {
-		t.Fatalf("loadAuthSecrets: %v", err)
+	var cfg config.AuthConfig
+	if err := config.LoadAuthSecrets(path, &cfg); err != nil {
+		t.Fatalf("LoadAuthSecrets: %v", err)
 	}
 	if cfg.AccessToken != "access" {
 		t.Fatalf("access_token = %q", cfg.AccessToken)
@@ -80,15 +100,15 @@ func TestSaveAndLoadAuthTokens(t *testing.T) {
 	}
 }
 
-func TestDefaultSecretPath(t *testing.T) {
-	got := defaultSecretPath(filepath.Join("dir", "config.toml"))
+func TestGetDefaultSecretPath(t *testing.T) {
+	got := config.GetDefaultSecretPath(filepath.Join("dir", "config.toml"))
 	want := filepath.Join("dir", "secret.toml")
 	if got != want {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 }
 
-func TestTruncateDisplayWidth(t *testing.T) {
+func TestTruncateByDisplayWidth(t *testing.T) {
 	tests := []struct {
 		name  string
 		value string
@@ -102,19 +122,19 @@ func TestTruncateDisplayWidth(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := truncateDisplayWidth(tt.value, tt.width)
+			got := term.TruncateByDisplayWidth(tt.value, tt.width)
 			if got != tt.want {
 				t.Fatalf("got %q, want %q", got, tt.want)
 			}
-			if displayWidth(got) > tt.width {
-				t.Fatalf("display width %d exceeds %d", displayWidth(got), tt.width)
+			if term.GetDisplayWidth(got) > tt.width {
+				t.Fatalf("display width %d exceeds %d", term.GetDisplayWidth(got), tt.width)
 			}
 		})
 	}
 }
 
 func TestFormatRaindropDate(t *testing.T) {
-	item := raindrop{Created: "2026-05-15T12:34:56.789Z"}
+	item := api.Raindrop{Created: "2026-05-15T12:34:56.789Z"}
 
 	got := formatRaindropDate(item)
 	if got != "2026/05/15" {
@@ -123,7 +143,7 @@ func TestFormatRaindropDate(t *testing.T) {
 }
 
 func TestRaindropCreatedAt(t *testing.T) {
-	item := raindrop{Created: "2026-05-15T12:34:56Z"}
+	item := api.Raindrop{Created: "2026-05-15T12:34:56Z"}
 
 	got := raindropCreatedAt(item)
 	want := time.Date(2026, 5, 15, 12, 34, 56, 0, time.UTC)
