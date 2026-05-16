@@ -7,40 +7,40 @@ import (
 	"strings"
 )
 
-func LoadAuth() (AuthConfig, error) {
-	configPath := GetDefaultConfigPath()
-	cfg, err := LoadAuthConfig(configPath)
+func LoadAuthSettings() (AuthSettings, error) {
+	configPath := defaultConfigPath()
+	cfg, err := loadAuthConfig(configPath)
 	if err != nil {
-		return AuthConfig{}, err
+		return AuthSettings{}, err
 	}
-	if err := LoadAuthSecrets(GetDefaultSecretPath(configPath), &cfg); err != nil {
-		return AuthConfig{}, err
+	if err := loadAuthSecrets(defaultSecretPath(configPath), &cfg); err != nil {
+		return AuthSettings{}, err
 	}
 	return cfg, nil
 }
 
-func LoadAuthConfig(path string) (AuthConfig, error) {
+func loadAuthConfig(path string) (AuthSettings, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return AuthConfig{}, fmt.Errorf("read config: %w", err)
+		return AuthSettings{}, fmt.Errorf("read config: %w", err)
 	}
 
 	values := parseAuthSection(string(content))
-	cfg := AuthConfig{
+	cfg := AuthSettings{
 		ClientID:     values["client_id"],
 		ClientSecret: values["client_secret"],
 		RedirectURI:  values["redirect_uri"],
 	}
 	if cfg.ClientID == "" {
-		return AuthConfig{}, errors.New("auth.client_id is missing in config")
+		return AuthSettings{}, errors.New("auth.client_id is missing in config")
 	}
 	if cfg.ClientSecret == "" {
-		return AuthConfig{}, errors.New("auth.client_secret is missing in config")
+		return AuthSettings{}, errors.New("auth.client_secret is missing in config")
 	}
 	return cfg, nil
 }
 
-func LoadAuthSecrets(path string, cfg *AuthConfig) error {
+func loadAuthSecrets(path string, cfg *AuthSettings) error {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {

@@ -9,7 +9,7 @@ func TruncateByDisplayWidth(value string, maxWidth int) string {
 	if maxWidth <= 0 {
 		return ""
 	}
-	if GetDisplayWidth(value) <= maxWidth {
+	if DisplayWidth(value) <= maxWidth {
 		return value
 	}
 	if maxWidth <= 1 {
@@ -17,11 +17,11 @@ func TruncateByDisplayWidth(value string, maxWidth int) string {
 	}
 
 	ellipsis := "…"
-	limit := maxWidth - GetDisplayWidth(ellipsis)
+	limit := maxWidth - DisplayWidth(ellipsis)
 	var builder strings.Builder
 	current := 0
 	for _, r := range value {
-		width := getRuneDisplayWidth(r)
+		width := runeDisplayWidth(r)
 		if current+width > limit {
 			break
 		}
@@ -32,15 +32,15 @@ func TruncateByDisplayWidth(value string, maxWidth int) string {
 	return builder.String()
 }
 
-func GetDisplayWidth(value string) int {
+func DisplayWidth(value string) int {
 	width := 0
 	for _, r := range value {
-		width += getRuneDisplayWidth(r)
+		width += runeDisplayWidth(r)
 	}
 	return width
 }
 
-func getRuneDisplayWidth(r rune) int {
+func runeDisplayWidth(r rune) int {
 	if r == '\t' {
 		return 4
 	}

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-func GetDefaultConfigPath() string {
+func defaultConfigPath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return filepath.Join(".config", "rdapi", "config.toml")
@@ -13,6 +13,6 @@ func GetDefaultConfigPath() string {
 	return filepath.Join(home, ".config", "rdapi", "config.toml")
 }
 
-func GetDefaultSecretPath(configPath string) string {
+func defaultSecretPath(configPath string) string {
 	return filepath.Join(filepath.Dir(configPath), "secret.toml")
 }

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func GetTerminalWidth() int {
+func TerminalWidth() int {
 	output, err := exec.Command("stty", "size").Output()
 	if err != nil {
 		return 80

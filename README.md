@@ -1,4 +1,4 @@
-# rdapi - RainDrop's API
+# rdapi - Raindrop.io's API
 
 Raindrop の API を使って、登録済みブックマークを取得する
 コマンドラインツールです。

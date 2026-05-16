@@ -1,4 +1,4 @@
-package term
+package cli
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"runtime"
 )
 
-func OpenBrowser(rawURL string) error {
+func OpenURL(rawURL string) error {
 	var command string
 	var args []string
 
@@ -22,7 +22,7 @@ func OpenBrowser(rawURL string) error {
 	args = append(args, rawURL)
 
 	if err := exec.Command(command, args...).Start(); err != nil {
-		return fmt.Errorf("open authorization URL in browser: %w", err)
+		return fmt.Errorf("open URL: %w", err)
 	}
 	return nil
 }

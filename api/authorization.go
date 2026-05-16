@@ -6,7 +6,7 @@ import (
 
 const authorizeURL = "https://raindrop.io/oauth/authorize"
 
-func CreateAuthorizationURL(clientID, redirectURI string) string {
+func BuildAuthorizationURL(clientID, redirectURI string) string {
 	values := url.Values{}
 	values.Set("response_type", "code")
 	values.Set("client_id", clientID)

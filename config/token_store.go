@@ -8,12 +8,12 @@ import (
 	"strings"
 )
 
-func SaveDefaultAuthTokens(accessToken, refreshToken string) error {
-	configPath := GetDefaultConfigPath()
-	return SaveAuthTokens(GetDefaultSecretPath(configPath), accessToken, refreshToken)
+func SaveAuthTokens(accessToken, refreshToken string) error {
+	configPath := defaultConfigPath()
+	return saveAuthTokensToFile(defaultSecretPath(configPath), accessToken, refreshToken)
 }
 
-func SaveAuthTokens(path, accessToken, refreshToken string) error {
+func saveAuthTokensToFile(path, accessToken, refreshToken string) error {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
@@ -22,9 +22,9 @@ func SaveAuthTokens(path, accessToken, refreshToken string) error {
 		content = []byte("[auth]\n")
 	}
 
-	updated := UpsertAuthValue(string(content), "access_token", accessToken)
+	updated := upsertAuthValue(string(content), "access_token", accessToken)
 	if refreshToken != "" {
-		updated = UpsertAuthValue(updated, "refresh_token", refreshToken)
+		updated = upsertAuthValue(updated, "refresh_token", refreshToken)
 	}
 
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
@@ -36,7 +36,7 @@ func SaveAuthTokens(path, accessToken, refreshToken string) error {
 	return nil
 }
 
-func UpsertAuthValue(content, key, value string) string {
+func upsertAuthValue(content, key, value string) string {
 	lines := strings.Split(content, "\n")
 	inAuth := false
 	authStart := -1
