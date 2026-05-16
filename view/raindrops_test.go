@@ -22,8 +22,8 @@ func TestFormatRaindropDate(t *testing.T) {
 
 func TestFormatRaindropsDoesNotReorderInput(t *testing.T) {
 	items := []api.Raindrop{
-		{Title: "old", CreatedAt: time.Date(2026, 5, 14, 0, 0, 0, 0, time.UTC)},
-		{Title: "new", CreatedAt: time.Date(2026, 5, 15, 0, 0, 0, 0, time.UTC)},
+		{Title: "old", Link: "https://example.com/old", CreatedAt: time.Date(2026, 5, 14, 0, 0, 0, 0, time.UTC)},
+		{Title: "new", Link: "https://example.com/new", CreatedAt: time.Date(2026, 5, 15, 0, 0, 0, 0, time.UTC)},
 	}
 
 	lines := FormatRaindrops(items, 80)
@@ -33,6 +33,26 @@ func TestFormatRaindropsDoesNotReorderInput(t *testing.T) {
 	}
 	if !strings.Contains(lines[0], "new") {
 		t.Fatalf("lines = %v", lines)
+	}
+}
+
+func TestFormatRaindropsIncludesURLLine(t *testing.T) {
+	items := []api.Raindrop{
+		{
+			Title:     "B'z Official Website",
+			Link:      "http://biz.com",
+			CreatedAt: time.Date(2026, 1, 9, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	got := FormatRaindrops(items, 80)
+	want := []string{
+		"2026/01/09 : B'z Official Website",
+		"             http://biz.com",
+	}
+
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("got %#v, want %#v", got, want)
 	}
 }
 

@@ -15,10 +15,12 @@ func FormatRaindrops(items []api.Raindrop, width int) []string {
 		return sorted[i].CreatedAt.After(sorted[j].CreatedAt)
 	})
 
-	lines := make([]string, 0, len(sorted))
+	lines := make([]string, 0, len(sorted)*2)
 	for _, item := range sorted {
 		line := fmt.Sprintf("%s : %s", formatRaindropDate(item), item.Title)
 		lines = append(lines, term.TruncateByDisplayWidth(line, width))
+		urlLine := fmt.Sprintf("%s%s", bookmarkURLIndent(), item.Link)
+		lines = append(lines, term.TruncateByDisplayWidth(urlLine, width))
 	}
 	return lines
 }
@@ -34,4 +36,8 @@ func formatRaindropDate(item api.Raindrop) string {
 		return "0000/00/00"
 	}
 	return item.CreatedAt.Format("2006/01/02")
+}
+
+func bookmarkURLIndent() string {
+	return "             "
 }
