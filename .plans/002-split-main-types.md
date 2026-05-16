@@ -49,11 +49,20 @@
   - `RefreshAccessToken`
   - `FetchAllRaindrops`
   - `FetchRaindropsPage`
-- `openBrowser` は CLI 操作として `main` パッケージに残す。
+- `openBrowser` は端末操作として `term` パッケージへ移動する。
+  - 新規ファイル: `term/browser.go`
+  - 関数名: `OpenBrowser`
 - `SaveAuthTokens` と `UpsertAuthValue` は `config` パッケージへ移動する。
 
 ## 実装方針
 
+- `main.go` の CLI 引数は廃止し、設定は `config.toml` と `secret.toml` だけで管理する。
+- `main.go` は設定ファイルと secret ファイルの path を意識しない。
+- path 解決は `config` パッケージ内で行う。
+- 読み込みは `config.LoadAuth()` から行う。
+- token 保存は `config.SaveDefaultAuthTokens()` から行う。
+- `redirectURI` は `config.toml` の `auth.redirect_uri` のみを使う。
+- 認可コードは引数では受け取らず、必要時に対話入力で受け取る。
 - `main.go` から対象の type 定義を削除する。
 - `main.go` に `rdapi/api` と `rdapi/config` の import を追加する。
 - 既存の関数シグネチャと変数宣言を新しい公開型へ置き換える。
@@ -64,10 +73,10 @@
 - macOS のメタデータファイル `.DS_Store` を Git 管理対象から除外する。
 - OAuth 認可 URL 生成は `api.CreateAuthorizationURL` から呼び出す。
 - API 通信に必要な補助関数は `api` パッケージ内へ寄せる。
-- token 保存は `config.SaveAuthTokens` から呼び出す。
-- 認可コード入力処理とブラウザ起動は CLI 操作として `main` パッケージ内に置く。
-- デフォルト設定ファイルパスは `config.GetDefaultConfigPath` から取得する。
-- デフォルト secret ファイルパスは `config.GetDefaultSecretPath` から取得する。
+- token 保存は `config.SaveDefaultAuthTokens` から呼び出す。
+- 認可コード入力処理は CLI 操作として `main` パッケージ内に置く。
+- ブラウザ起動は `term.OpenBrowser` から呼び出す。
+- デフォルト設定ファイルと secret ファイルの path 解決は `config` パッケージ内で行う。
 - 表示幅の省略処理は `term.TruncateByDisplayWidth` から呼び出す。
 - 端末幅は `term.GetTerminalWidth` から取得する。
 

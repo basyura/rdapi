@@ -7,6 +7,18 @@ import (
 	"strings"
 )
 
+func LoadAuth() (AuthConfig, error) {
+	configPath := GetDefaultConfigPath()
+	cfg, err := LoadAuthConfig(configPath)
+	if err != nil {
+		return AuthConfig{}, err
+	}
+	if err := LoadAuthSecrets(GetDefaultSecretPath(configPath), &cfg); err != nil {
+		return AuthConfig{}, err
+	}
+	return cfg, nil
+}
+
 func LoadAuthConfig(path string) (AuthConfig, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {

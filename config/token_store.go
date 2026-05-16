@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+func SaveDefaultAuthTokens(accessToken, refreshToken string) error {
+	configPath := GetDefaultConfigPath()
+	return SaveAuthTokens(GetDefaultSecretPath(configPath), accessToken, refreshToken)
+}
+
 func SaveAuthTokens(path, accessToken, refreshToken string) error {
 	content, err := os.ReadFile(path)
 	if err != nil {

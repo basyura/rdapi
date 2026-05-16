@@ -80,20 +80,6 @@ yyyy/MM/dd : ブックマークタイトル
 
 タイトルが長い場合は、ターミナル幅に合わせて末尾を `…` で省略します。
 
-## オプション
-
-```sh
-go run main.go -config /path/to/config.toml
-go run main.go -secret /path/to/secret.toml
-go run main.go -redirect-uri http://localhost/callback
-go run main.go -code <authorization-code>
-```
-
-- `-config`: `config.toml` のパスを指定します。
-- `-secret`: `secret.toml` のパスを指定します。
-- `-redirect-uri`: 設定ファイルの `redirect_uri` を一時的に上書きします。
-- `-code`: 非対話で認可コードを指定します。
-
 ## 注意
 
 - `client_secret`、`access_token`、`refresh_token` は公開しないでください。
