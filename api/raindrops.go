@@ -38,10 +38,10 @@ type raindropsResponse struct {
 	Count  int                `json:"count"`
 }
 
-func FetchAllRaindrops(client *http.Client, accessToken string) ([]Raindrop, error) {
+func FetchAllRaindrops(client *http.Client, accessToken string, search string) ([]Raindrop, error) {
 	var all []Raindrop
 	for page := 0; ; page++ {
-		items, err := fetchRaindropsPage(client, accessToken, page)
+		items, err := fetchRaindropsPage(client, accessToken, page, search)
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +53,7 @@ func FetchAllRaindrops(client *http.Client, accessToken string) ([]Raindrop, err
 	return all, nil
 }
 
-func fetchRaindropsPage(client *http.Client, accessToken string, page int) ([]Raindrop, error) {
+func fetchRaindropsPage(client *http.Client, accessToken string, page int, search string) ([]Raindrop, error) {
 	endpoint, err := url.Parse(raindropsURL)
 	if err != nil {
 		return nil, fmt.Errorf("parse raindrops URL: %w", err)
@@ -61,6 +61,9 @@ func fetchRaindropsPage(client *http.Client, accessToken string, page int) ([]Ra
 	query := endpoint.Query()
 	query.Set("page", strconv.Itoa(page))
 	query.Set("perpage", strconv.Itoa(raindropsPerPage))
+	if search != "" {
+		query.Set("search", search)
+	}
 	endpoint.RawQuery = query.Encode()
 
 	req, err := http.NewRequest(http.MethodGet, endpoint.String(), nil)

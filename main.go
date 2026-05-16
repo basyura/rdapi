@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,13 +17,22 @@ import (
 )
 
 func main() {
-	if err := run(os.Stdin, os.Stdout); err != nil {
+	if err := run(os.Stdin, os.Stdout, os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run(in io.Reader, out io.Writer) error {
+type commandLineOptions struct {
+	fromSearch string
+}
+
+func run(in io.Reader, out io.Writer, args []string) error {
+	options, err := parseCommandLine(args)
+	if err != nil {
+		return err
+	}
+
 	cfg, err := config.LoadAuthSettings()
 	if err != nil {
 		return err
@@ -66,11 +76,44 @@ func run(in io.Reader, out io.Writer) error {
 		accessToken = token.AccessToken
 	}
 
-	return fetchAndPrintRaindrops(client, accessToken, out)
+	return fetchAndPrintRaindrops(client, accessToken, out, options.fromSearch)
 }
 
-func fetchAndPrintRaindrops(client *http.Client, accessToken string, out io.Writer) error {
-	items, err := api.FetchAllRaindrops(client, accessToken)
+func parseCommandLine(args []string) (commandLineOptions, error) {
+	flags := flag.NewFlagSet("rdapi", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	from := flags.String("from", "", "fetch bookmarks created on or after yyyyMMdd")
+	if err := flags.Parse(args); err != nil {
+		return commandLineOptions{}, err
+	}
+	if flags.NArg() > 0 {
+		return commandLineOptions{}, fmt.Errorf("unexpected argument: %s", flags.Arg(0))
+	}
+	if *from == "" {
+		return commandLineOptions{}, nil
+	}
+
+	fromDate, err := parseFromDate(*from)
+	if err != nil {
+		return commandLineOptions{}, err
+	}
+	return commandLineOptions{fromSearch: "created:>" + fromDate}, nil
+}
+
+func parseFromDate(value string) (string, error) {
+	if len(value) != len("20060102") {
+		return "", fmt.Errorf("invalid --from date %q: use yyyyMMdd", value)
+	}
+	fromDate, err := time.Parse("20060102", value)
+	if err != nil {
+		return "", fmt.Errorf("invalid --from date %q: use yyyyMMdd", value)
+	}
+	return fromDate.AddDate(0, 0, -1).Format("2006-01-02"), nil
+}
+
+func fetchAndPrintRaindrops(client *http.Client, accessToken string, out io.Writer, search string) error {
+	items, err := api.FetchAllRaindrops(client, accessToken, search)
 	if err != nil {
 		return err
 	}

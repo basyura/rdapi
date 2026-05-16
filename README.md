@@ -64,6 +64,15 @@ go run main.go
 `access_token` がなく `refresh_token` がある場合は、access token を更新して
 `secret.toml` に保存します。
 
+## 日付指定
+
+`--from yyyyMMdd` を指定すると、その日以降に登録されたブックマークのみを
+取得します。指定した日も取得対象に含みます。
+
+```sh
+go run main.go --from 20260515
+```
+
 ## 出力形式
 
 出力形式は以下です。
